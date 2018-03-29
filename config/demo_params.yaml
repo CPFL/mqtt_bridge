@@ -6,33 +6,35 @@ mqtt:
     port: 1883
     keepalive: 60
   private_path: device/001
-serializer: msgpack:dumps
-deserializer: msgpack:loads
+serializer: json:dumps
+deserializer: json:loads
 bridge:
-  # ping pong
+  # current_pose
   - factory: mqtt_bridge.bridge:RosToMqttBridge
-    msg_type: std_msgs.msg:Bool
-    topic_from: /ping
-    topic_to: ping
-  - factory: mqtt_bridge.bridge:MqttToRosBridge
-    msg_type: std_msgs.msg:Bool
-    topic_from: ping
-    topic_to: /pong
-  # echo back
+    msg_type: geometry_msgs.msg:PoseStamped
+    topic_from: /current_pose
+    topic_to: /ams/current_pose_subscriber_ros_message_basis/{id}/{target}/{id}/current_pose
+    frequency: 1
+  # closest_waypoint
   - factory: mqtt_bridge.bridge:RosToMqttBridge
-    msg_type: std_msgs.msg:String
-    topic_from: /echo
-    topic_to: echo
-  - factory: mqtt_bridge.bridge:MqttToRosBridge
-    msg_type: std_msgs.msg:String
-    topic_from: echo
-    topic_to: /back
-  # private path
+    msg_type: std_msgs.msg:Int32
+    topic_from: /closest_waypoint
+    topic_to: /ams/closest_waypoint_subscriber/{id}/{target}/{id}/closest_waypoint
+    frequency: 1
+  # decisionmaker/states
   - factory: mqtt_bridge.bridge:RosToMqttBridge
-    msg_type: std_msgs.msg:String
-    topic_from: /private/echo
-    topic_to: ~/echo
+    msg_type: autoware_msgs.msg:state
+    topic_from: /decisionmaker/states
+    topic_to: /ams/decision_maker_states_subscriber/{id}/{target}/{id}/decision_maker_states
+    frequency: 1
+  # state_command
   - factory: mqtt_bridge.bridge:MqttToRosBridge
-    msg_type: std_msgs.msg:String
-    topic_from: ~/echo
-    topic_to: /private/back
+    msg_type: std_msgs.msg:Int32
+    topic_from: /ams/{target}/{id}/state_command_publisher/{id}/state_command
+    topic_to: /state_cmd
+  # based/lane_waypoint_array
+  - factory: mqtt_bridge.bridge:MqttToRosBridge
+    msg_type: autoware_msgs.msg:LaneArray
+    topic_from: /ams/{target}/{id}/lane_array_publisher/{id}/lane_array
+    topic_to: /based/lane_waypoints_array
+

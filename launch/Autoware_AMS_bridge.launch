@@ -1,0 +1,10 @@
+<launch>
+  <arg name="use_tls" default="false" />
+  <arg name="replace_strings" default=""/>
+  <node name="mqtt_bridge" pkg="mqtt_bridge" type="mqtt_bridge_node.py" output="screen">
+    <rosparam command="delete" param="" />
+    <rosparam command="load" file="$(find mqtt_bridge)/config/demo_params.yaml" />
+    <rosparam if="$(arg use_tls)" command="load" ns="mqtt" file="$(find mqtt_bridge)/config/tls_params.yaml" />
+    <param name="replace_strings" value="$(arg replace_strings)" />
+  </node>
+</launch>

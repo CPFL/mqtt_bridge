@@ -10,6 +10,28 @@ from .mqtt_client import create_private_path_extractor
 from .util import lookup_object
 
 
+def replace_topic(topics, topic_translate):
+    replace_strings = dict()
+
+    sp = topic_translate.split("/")
+    for key_value in sp:
+        key, value = key_value.split(":")
+        replace_strings[key] = value
+
+    new_topics = list()
+    for topic in topics:
+        for key, value in replace_strings.items():
+            replace_string = "{" + key + "}"
+            topic["topic_from"] = topic["topic_from"].replace(replace_string, value)
+        for key, value in replace_strings.items():
+            replace_string = "{" + key + "}"
+            topic["topic_to"] = topic["topic_to"].replace(replace_string, value)
+
+        new_topics.append(topic)
+
+    return new_topics
+
+
 def create_config(mqtt_client, serializer, deserializer, mqtt_private_path):
     if isinstance(serializer, basestring):
         serializer = lookup_object(serializer)
@@ -25,15 +47,24 @@ def create_config(mqtt_client, serializer, deserializer, mqtt_private_path):
 
 
 def mqtt_bridge_node():
+
     # init node
     rospy.init_node('mqtt_bridge_node')
 
     # load parameters
     params = rospy.get_param("~", {})
+
     mqtt_params = params.pop("mqtt", {})
     conn_params = mqtt_params.pop("connection")
     mqtt_private_path = mqtt_params.pop("private_path", "")
     bridge_params = params.get("bridge", [])
+
+    print(bridge_params)
+    replace_strings = params.get("replace_strings", "")
+    if replace_strings != "":
+        bridge_params = replace_topic(bridge_params, replace_strings)
+    print(bridge_params)
+
 
     # create mqtt client
     mqtt_client_factory_name = rospy.get_param(
@@ -67,6 +98,8 @@ def mqtt_bridge_node():
     rospy.on_shutdown(mqtt_client.disconnect)
     rospy.on_shutdown(mqtt_client.loop_stop)
     rospy.spin()
+
+
 
 
 def _on_connect(client, userdata, flags, response_code):
