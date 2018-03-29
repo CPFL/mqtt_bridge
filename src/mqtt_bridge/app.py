@@ -59,12 +59,9 @@ def mqtt_bridge_node():
     mqtt_private_path = mqtt_params.pop("private_path", "")
     bridge_params = params.get("bridge", [])
 
-    print(bridge_params)
     replace_strings = params.get("replace_strings", "")
     if replace_strings != "":
         bridge_params = replace_topic(bridge_params, replace_strings)
-    print(bridge_params)
-
 
     # create mqtt client
     mqtt_client_factory_name = rospy.get_param(

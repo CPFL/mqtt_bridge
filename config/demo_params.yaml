@@ -13,7 +13,7 @@ bridge:
   - factory: mqtt_bridge.bridge:RosToMqttBridge
     msg_type: geometry_msgs.msg:PoseStamped
     topic_from: /current_pose
-    topic_to: /ams/current_pose_subscriber_ros_message_basis/{id}/{target}/{id}/current_pose
+    topic_to: /ams/current_pose_subscriber/{id}/{target}/{id}/current_pose
     frequency: 1
   # closest_waypoint
   - factory: mqtt_bridge.bridge:RosToMqttBridge
