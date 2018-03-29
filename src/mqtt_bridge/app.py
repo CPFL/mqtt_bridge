@@ -10,20 +10,14 @@ from .mqtt_client import create_private_path_extractor
 from .util import lookup_object
 
 
-def replace_topic(topics, topic_translate):
-    replace_strings = dict()
-
-    sp = topic_translate.split("/")
-    for key_value in sp:
-        key, value = key_value.split(":")
-        replace_strings[key] = value
-
+def replace_topic(topics, replace_strings):
+    separate_replace_strings = eval(replace_strings)
     new_topics = list()
     for topic in topics:
-        for key, value in replace_strings.items():
+        for key, value in separate_replace_strings.items():
             replace_string = "{" + key + "}"
             topic["topic_from"] = topic["topic_from"].replace(replace_string, value)
-        for key, value in replace_strings.items():
+        for key, value in separate_replace_strings.items():
             replace_string = "{" + key + "}"
             topic["topic_to"] = topic["topic_to"].replace(replace_string, value)
 
@@ -60,8 +54,10 @@ def mqtt_bridge_node():
     bridge_params = params.get("bridge", [])
 
     replace_strings = params.get("replace_strings", "")
+    print(replace_strings)
     if replace_strings != "":
         bridge_params = replace_topic(bridge_params, replace_strings)
+    print(bridge_params)
 
     # create mqtt client
     mqtt_client_factory_name = rospy.get_param(
