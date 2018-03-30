@@ -1,159 +1,57 @@
-# mqtt_bridge
+# mqtt_bridge for AMS-Autoware connection
 
-mqtt_bridge provides a functionality to bridge between ROS and MQTT in bidirectional.
+This MQTT_bridge has been improved to connect AMS and Autoware.
+The topic name can be changed dynamically by roslaunch argument.
+
+## How to setup
+
+Install necessary packages as below.
+
+https://github.com/groove-x/mqtt_bridge
 
 
-## Principle
+Set up Autoware and AMS as below.
 
-`mqtt_bridge` uses ROS message as its protocol. Messages from ROS are serialized by json (or messagepack) for MQTT, and messages from MQTT are deserialized for ROS topic. So MQTT messages should be ROS message compatible. (We use `rosbridge_library.internal.message_conversion` for message conversion.)
+https://github.com/CPFL/Autoware
 
-This limitation can be overcome by defining custom bridge class, though.
+https://github.com/CPFL/AMS
 
-
-## Demo
-
-### prepare MQTT broker and client
-
-```
-$ sudo apt-get install mosquitto mosquitto-clients
-```
-
-### Install python modules
+Build as below.
 
 ```bash
-$ pip install -r requirements.txt
-```
-
-### launch node
-
-``` bash
-$ roslaunch mqtt_bridge demo.launch
-```
-
-Publish to `/ping`,
-
-```
-$ rostopic pub /ping std_msgs/Bool "data: true"
-```
-
-and see response to `/pong`.
-
-```
-$ rostopic echo /pong
-data: True
----
-```
-
-Publish "hello" to `/echo`,
-
-```
-$ rostopic pub /echo std_msgs/String "data: 'hello'"
-```
-
-and see response to `/back`.
-
-```
-$ rostopic echo /back
-data: hello
----
-```
-
-You can also see MQTT messages using `mosquitto_sub`
-
-```
-$ mosquitto_sub -t '#'
-```
-
-## Usage
-
-parameter file (config.yaml):
-
-``` yaml
-mqtt:
-  client:
-    protocol: 4      # MQTTv311
-  connection:
-    host: localhost
-    port: 1883
-    keepalive: 60
-bridge:
-  # ping pong
-  - factory: mqtt_bridge.bridge:RosToMqttBridge
-    msg_type: std_msgs.msg:Bool
-    topic_from: /ping
-    topic_to: ping
-  - factory: mqtt_bridge.bridge:MqttToRosBridge
-    msg_type: std_msgs.msg:Bool
-    topic_from: ping
-    topic_to: /pong
-```
-
-launch file:
-
-``` xml
-<launch>
-  <node name="mqtt_bridge" pkg="mqtt_bridge" type="mqtt_bridge_node.py" output="screen">
-    <rosparam file="/path/to/config.yaml" command="load" />
-  </node>
-</launch>
+cp -r mqtt_bridge ${Autoware_path}/Autoware/ros/src/util/package/
+chmod +x ${Autoware_path}/Autoware/ros/src/util/package/mqtt_bridge/script/mqtt_bridge_node.py
+cd ${Autoware_path}/Autoware/ros/
+catkin_make --pkg mqtt_bridge
+rosdep install mqtt_bridge
 ```
 
 
-## Configuration
+##example
 
-### mqtt
-
-Parameters under `mqtt` section are used for creating paho's `mqtt.Client` and its configuration.
-
-#### subsections
-
-* `client`: used for `mqtt.Client` constructor
-* `tls`: used for tls configuration
-* `account`: used for username and password configuration
-* `message`: used for MQTT message configuration
-* `userdata`: used for MQTT userdata configuration
-* `will`: used for MQTT's will configuration
-
-See `mqtt_bridge.mqtt_client` for detail.
-
-### mqtt private path
-
-If `mqtt/private_path` parameter is set, leading `~/` in MQTT topic path will be replaced by this value. For example, if `mqtt/pivate_path` is set as "device/001", MQTT path "~/value" will be converted to "device/001/value".
-
-### serializer and deserializer
-
-`mqtt_bridge` uses `json` as a serializer in default. But you can also configure other serializers. For example, if you want to use messagepack for serialization, add following configuration.
-
-``` yaml
-serializer: msgpack:dumps
-deserializer: msgpack:loads
+Write the character string to replace with enclosed in {}.
+```yaml
+factory: mqtt_bridge.bridge:RosToMqttBridge
+msg_type: std_msg.msg:Int32 
+topic_from: /test{str1}
+topic_to: {topic1}
 ```
 
-### bridges
+Execute launch file like below.
 
-You can list ROS <--> MQTT tranfer specifications in following format.
-
-``` yaml
-bridge:
-  # ping pong
-  - factory: mqtt_bridge.bridge:RosToMqttBridge
-    msg_type: std_msgs.msg:Bool
-    topic_from: /ping
-    topic_to: ping
-  - factory: mqtt_bridge.bridge:MqttToRosBridge
-    msg_type: std_msgs.msg:Bool
-    topic_from: ping
-    topic_to: /pong
+```bash
+roslaunch Autoware_AMS_bridge.launch replace_strings:="{'str1':'1','topic1':'/test2'}"
 ```
 
-* `factory`: bridge class for transfering message from ROS to MQTT, and vise versa.
-* `msg_type`: ROS Message type transfering through the bridge.
-* `topic_from`: topic incoming from (ROS or MQTT)
-* `topic_to`: topic outgoing to (ROS or MQTT)
+The topic to transfer is as follows.
 
-Also, you can create custom bridge class by inheriting `mqtt_brige.bridge.Bridge`.
+```
+topic_from: /test1
+topic_to: /test2
+```
 
+In case of using Autoware unique message, execute below before roslaunch
 
-## License
-
-This software is released under the MIT License, see LICENSE.txt.
+```bash
+source ${Autoware_path}/Autoware/ros/devel/setup.bash
+```
