@@ -40,7 +40,7 @@ topic_to: {topic1}
 Execute launch file like below.
 
 ```bash
-roslaunch Autoware_AMS_bridge.launch replace_strings:="{'str1':'1','topic1':'/test2'}"
+roslaunch test.launch replace_strings:="{'str1':'1','topic1':'/test2'}"
 ```
 
 The topic to transfer is as follows.
@@ -50,8 +50,28 @@ topic_from: /test1
 topic_to: /test2
 ```
 
+
+## How to execute mqtt_bridge between Autoware and AMS autoware example 
+
+Start Autoware.
+
 In case of using Autoware unique message, execute below before roslaunch
 
 ```bash
 source ${Autoware_path}/Autoware/ros/devel/setup.bash
 ```
+
+Execute Autoware_AMS_bridge.launch as below
+
+```bash
+roslaunch Autoware_AMS_bridge.launch replace_strings:="{'id':'a1','target':'autoware'}"
+```
+
+Execute example of AMS
+
+```bash
+cd ${AMS_path}/example/autoware/
+python launcher.py
+```
+
+Communication between Autoware and AMS is possible.
